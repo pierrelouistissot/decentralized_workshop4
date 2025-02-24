@@ -11,5 +11,8 @@
     "^@/(.*)$": "<rootDir>/src/$1"
   },
   "setupFilesAfterEnv": ["<rootDir>/__test__/config/jestSetup.ts"],
-  "testTimeout": 10000
+  "testTimeout": 10000,
+  "forceExit": true,
+  "detectOpenHandles": true,
+  "maxWorkers": 1
 }
