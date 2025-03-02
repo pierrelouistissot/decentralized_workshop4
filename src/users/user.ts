@@ -30,48 +30,53 @@ export async function user(userId: number) {
 
   _user.post("/message", (req: Request, res: Response) => {
     const { message } = req.body as SendMessageBody;
-
     if (!message) {
       return res.status(400).json({ error: "Missing message" });
     }
-
     lastReceivedMessage = message;
-
     console.log(`📩 User ${userId} received message: ${message}`);
     return res.json({ success: true });
   });
 
   _user.post("/sendMessage", async (req: Request, res: Response) => {
     const { message, destinationUserId } = req.body as SendMessageBody;
-
     if (!message || destinationUserId === undefined) {
       return res.status(400).json({ error: "Missing message or destinationUserId" });
     }
-
     lastSentMessage = message;
 
     console.log(`📤 User ${userId} sent message to User ${destinationUserId}: ${message}`);
 
     try {
-      await axios.post(`http://localhost:${BASE_USER_PORT + destinationUserId}/message`, { message });
-      return res.json({ success: true });
+      const response = await axios.post(
+          `http://localhost:${BASE_USER_PORT + destinationUserId}/message`,
+          { message }
+      );
+      return res.json(response.data);
     } catch (error: any) {
       console.error(`❌ Failed to send message:`, error.message);
       return res.status(500).json({ error: "Failed to send message" });
     }
   });
 
-
   const port = BASE_USER_PORT + userId;
-  console.log(`Tentative de démarrage de User ${userId} sur le port ${port}`);
 
-  const server = _user.listen(port, () => {
-    console.log(`User ${userId} is listening on port ${port}`);
-  });
+  const startServer = () => {
+    const server = _user.listen(port, () => {
+      console.log(`✅ User ${userId} is listening on port ${port}`);
+    });
 
-  server.on("error", (err) => {
-    console.error(`Erreur au démarrage de User ${userId} :`, err.message);
-  });
+    server.on("error", (err: any) => {
+      if (err.code === "EADDRINUSE") {
+        console.error(`⚠️ Port ${port} already in use. Retrying in 3 seconds...`);
+        setTimeout(startServer, 3000);
+      } else {
+        console.error(`❌ Error starting User ${userId}:`, err.message);
+      }
+    });
 
-  return server;
+    return server;
+  };
+
+  return startServer();
 }

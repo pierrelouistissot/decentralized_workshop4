@@ -313,7 +313,8 @@ describe("Onion Routing", () => {
         expect(nodes.length).toBe(10);
 
         for (let index = 0; index < 10; index++) {
-          const node = nodes.find((_n) => _n.nodeId === index);
+          const node = nodes.find((_n: { nodeId: number; pubKey: string }) => _n.nodeId === index);
+
 
           expect(
             node !== undefined && /^[A-Za-z0-9+/]{392}$/.test(node.pubKey)
